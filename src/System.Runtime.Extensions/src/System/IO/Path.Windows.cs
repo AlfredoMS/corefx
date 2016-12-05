@@ -15,7 +15,7 @@ namespace System.IO
 
         private const string DirectorySeparatorCharAsString = "\\";
 
-        private static readonly char[] InvalidFileNameChars = 
+        public static char[] GetInvalidFileNameChars() => new char[]
         { 
             '\"', '<', '>', '|', '\0', 
             (char)1, (char)2, (char)3, (char)4, (char)5, (char)6, (char)7, (char)8, (char)9, (char)10, 
@@ -92,7 +92,7 @@ namespace System.IO
         public static string GetTempPath()
         {
             StringBuilder sb = StringBuilderCache.Acquire(MaxPath);
-            uint r = Interop.mincore.GetTempPathW(MaxPath, sb);
+            uint r = Interop.Kernel32.GetTempPathW(MaxPath, sb);
             if (r == 0)
                 throw Win32Marshal.GetExceptionForLastWin32Error();
             return GetFullPath(StringBuilderCache.GetStringAndRelease(sb));
@@ -105,7 +105,7 @@ namespace System.IO
             string path = GetTempPath();
 
             StringBuilder sb = StringBuilderCache.Acquire(MaxPath);
-            uint r = Interop.mincore.GetTempFileNameW(path, "tmp", 0, sb);
+            uint r = Interop.Kernel32.GetTempFileNameW(path, "tmp", 0, sb);
             if (r == 0)
                 throw Win32Marshal.GetExceptionForLastWin32Error();
             return StringBuilderCache.GetStringAndRelease(sb);
@@ -146,5 +146,8 @@ namespace System.IO
             int pathRoot = PathInternal.GetRootLength(path);
             return pathRoot <= 0 ? string.Empty : path.Substring(0, pathRoot);
         }
+
+        /// <summary>Gets whether the system is case-sensitive.</summary>
+        internal static bool IsCaseSensitive { get { return false; } }
     }
 }

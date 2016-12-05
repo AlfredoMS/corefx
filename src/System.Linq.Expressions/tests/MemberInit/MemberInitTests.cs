@@ -17,6 +17,30 @@ namespace System.Linq.Expressions.Tests
             VerifyMemberInit(() => new X { Y = { Z = 42, YS = { 2, 3 } }, XS = { 5, 7 } }, x => x.Y.Z == 42 && x.XS.Sum() == 5 + 7 && x.Y.YS.Sum() == 2 + 3, useInterpreter);
         }
 
+        [Fact]
+        public static void ToStringTest()
+        {
+            MemberInitExpression e1 = Expression.MemberInit(Expression.New(typeof(Y)), Expression.Bind(typeof(Y).GetProperty(nameof(Y.Z)), Expression.Parameter(typeof(int), "z")));
+            Assert.Equal("new Y() {Z = z}", e1.ToString());
+
+            MemberInitExpression e2 = Expression.MemberInit(Expression.New(typeof(Y)), Expression.Bind(typeof(Y).GetProperty(nameof(Y.Z)), Expression.Parameter(typeof(int), "z")), Expression.Bind(typeof(Y).GetProperty(nameof(Y.A)), Expression.Parameter(typeof(int), "a")));
+            Assert.Equal("new Y() {Z = z, A = a}", e2.ToString());
+
+            MemberInitExpression e3 = Expression.MemberInit(Expression.New(typeof(X)), Expression.MemberBind(typeof(X).GetProperty(nameof(X.Y)), Expression.Bind(typeof(Y).GetProperty(nameof(Y.Z)), Expression.Parameter(typeof(int), "z"))));
+            Assert.Equal("new X() {Y = {Z = z}}", e3.ToString());
+
+            MemberInitExpression e4 = Expression.MemberInit(Expression.New(typeof(X)), Expression.MemberBind(typeof(X).GetProperty(nameof(X.Y)), Expression.Bind(typeof(Y).GetProperty(nameof(Y.Z)), Expression.Parameter(typeof(int), "z")), Expression.Bind(typeof(Y).GetProperty(nameof(Y.A)), Expression.Parameter(typeof(int), "a"))));
+            Assert.Equal("new X() {Y = {Z = z, A = a}}", e4.ToString());
+
+            Reflection.MethodInfo add = typeof(List<int>).GetMethod(nameof(List<int>.Add));
+
+            MemberInitExpression e5 = Expression.MemberInit(Expression.New(typeof(X)), Expression.ListBind(typeof(X).GetProperty(nameof(X.XS)), Expression.ElementInit(add, Expression.Parameter(typeof(int), "a"))));
+            Assert.Equal("new X() {XS = {Void Add(Int32)(a)}}", e5.ToString());
+
+            MemberInitExpression e6 = Expression.MemberInit(Expression.New(typeof(X)), Expression.ListBind(typeof(X).GetProperty(nameof(X.XS)), Expression.ElementInit(add, Expression.Parameter(typeof(int), "a")), Expression.ElementInit(add, Expression.Parameter(typeof(int), "b"))));
+            Assert.Equal("new X() {XS = {Void Add(Int32)(a), Void Add(Int32)(b)}}", e6.ToString());
+        }
+
         #endregion
 
         #region Test verifiers
@@ -49,6 +73,7 @@ namespace System.Linq.Expressions.Tests
             private readonly List<int> _ys = new List<int>();
 
             public int Z { get; set; }
+            public int A { get; set; }
 
             public List<int> YS { get { return _ys; } }
         }

@@ -2,14 +2,19 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using System;
-using System.Collections.Generic;
 using Xunit;
 
 namespace System.Linq.Expressions.Tests
 {
     public static class AsNullableTests
     {
+        [Fact]
+        public static void NotLiftedEvenOnNullableOperand()
+        {
+            Assert.False(Expression.TypeAs(Expression.Constant(E.A, typeof(E?)), typeof(E?)).IsLifted);
+            Assert.False(Expression.TypeAs(Expression.Constant(E.A, typeof(E?)), typeof(Enum)).IsLifted);
+        }
+
         #region Test methods
 
         [Theory, ClassData(typeof(CompilationTypes))]

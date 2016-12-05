@@ -2,7 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using System;
 using Xunit;
 
 namespace System.Linq.Expressions.Tests
@@ -2707,6 +2706,17 @@ namespace System.Linq.Expressions.Tests
                 Assert.Throws<NullReferenceException>(() => CheckGenericWithStructRestrictionArrayIndexExpression(array, index, useInterpreter));
             else
                 Assert.Throws<IndexOutOfRangeException>(() => CheckGenericWithStructRestrictionArrayIndexExpression(array, index, useInterpreter));
+        }
+
+        #endregion
+
+        #region ToString
+
+        [Fact]
+        public static void ToStringTest()
+        {
+            BinaryExpression e = Expression.ArrayIndex(Expression.Parameter(typeof(int[]), "xs"), Expression.Parameter(typeof(int), "i"));
+            Assert.Equal("xs[i]", e.ToString());
         }
 
         #endregion

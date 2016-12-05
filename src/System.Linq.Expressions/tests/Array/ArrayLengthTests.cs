@@ -2,7 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using System;
 using Xunit;
 
 namespace System.Linq.Expressions.Tests
@@ -1553,6 +1552,17 @@ namespace System.Linq.Expressions.Tests
                     Enumerable.Empty<ParameterExpression>());
             Func<int> f = e.Compile(useInterpreter);
             Assert.Equal(array.Length, f());
+        }
+
+        #endregion
+
+        #region ToString
+
+        [Fact]
+        public static void ToStringTest()
+        {
+            UnaryExpression e = Expression.ArrayLength(Expression.Parameter(typeof(int[]), "xs"));
+            Assert.Equal("ArrayLength(xs)", e.ToString());
         }
 
         #endregion

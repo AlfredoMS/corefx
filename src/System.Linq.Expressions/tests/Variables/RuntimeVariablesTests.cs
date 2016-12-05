@@ -2,7 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Xunit;
@@ -173,6 +172,19 @@ namespace System.Linq.Expressions.Tests
         {
             RuntimeVariablesExpression varExp = Expression.RuntimeVariables(Enumerable.Repeat(Expression.Variable(typeof(RuntimeVariablesTests)), 1));
             Assert.NotSame(varExp, varExp.Update(new[] { Expression.Variable(typeof(RuntimeVariablesTests)) }));
+        }
+
+        [Fact]
+        public void ToStringTest()
+        {
+            RuntimeVariablesExpression e1 = Expression.RuntimeVariables();
+            Assert.Equal("()", e1.ToString());
+
+            RuntimeVariablesExpression e2 = Expression.RuntimeVariables(Expression.Parameter(typeof(int), "x"));
+            Assert.Equal("(x)", e2.ToString());
+
+            RuntimeVariablesExpression e3 = Expression.RuntimeVariables(Expression.Parameter(typeof(int), "x"), Expression.Parameter(typeof(int), "y"));
+            Assert.Equal("(x, y)", e3.ToString());
         }
     }
 }

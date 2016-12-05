@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Net.Http;
 using System.Net.Security;
 using System.Runtime.InteropServices;
 using System.Security.Authentication;
@@ -77,7 +78,11 @@ internal static partial class Interop
                     throw new PlatformNotSupportedException(SR.Format(SR.net_ssl_encryptionpolicy_notsupported, policy));
                 }
 
-                if (certHandle != null && certKeyHandle != null)
+                bool hasCertificateAndKey =
+                    certHandle != null && !certHandle.IsInvalid
+                    && certKeyHandle != null && !certKeyHandle.IsInvalid;
+
+                if (hasCertificateAndKey)
                 {
                     SetSslCertificate(innerContext, certHandle, certKeyHandle);
                 }
@@ -98,6 +103,28 @@ internal static partial class Interop
                 {
                     context.Dispose();
                     throw CreateSslException(SR.net_allocate_ssl_context_failed);
+                }
+
+                if (hasCertificateAndKey)
+                {
+                    bool hasCertReference = false;
+                    try
+                    {
+                        certHandle.DangerousAddRef(ref hasCertReference);
+                        using (X509Certificate2 cert = new X509Certificate2(certHandle.DangerousGetHandle()))
+                        {
+                            using (X509Chain chain = TLSCertificateExtensions.BuildNewChain(cert, includeClientApplicationPolicy: false))
+                            {
+                                if (chain != null && !Ssl.AddExtraChainCertificates(context, chain))
+                                    throw CreateSslException(SR.net_ssl_use_cert_failed);
+                            }
+                        }
+                    }
+                    finally
+                    {
+                        if (hasCertReference)
+                            certHandle.DangerousRelease();
+                    }
                 }
             }
 
@@ -158,7 +185,7 @@ internal static partial class Interop
         {
             Debug.Assert(input != null);
             Debug.Assert(offset >= 0);
-            Debug.Assert(count >= 0);
+            Debug.Assert(count > 0);
             Debug.Assert(offset <= input.Length);
             Debug.Assert(input.Length - offset >= count);
 
@@ -310,10 +337,10 @@ internal static partial class Interop
 
         private static IntPtr GetSslMethod(SslProtocols protocols)
         {
-            Debug.Assert(protocols != SslProtocols.None, "All protocols are disabled");
-
+#pragma warning disable 0618 // Ssl2, Ssl3 are deprecated.
             bool ssl2 = (protocols & SslProtocols.Ssl2) == SslProtocols.Ssl2;
             bool ssl3 = (protocols & SslProtocols.Ssl3) == SslProtocols.Ssl3;
+#pragma warning restore
             bool tls10 = (protocols & SslProtocols.Tls) == SslProtocols.Tls;
             bool tls11 = (protocols & SslProtocols.Tls11) == SslProtocols.Tls11;
             bool tls12 = (protocols & SslProtocols.Tls12) == SslProtocols.Tls12;
@@ -400,7 +427,7 @@ internal static partial class Interop
                         continue;
                     }
 
-                    using (SafeX509Handle certHandle = Crypto.X509Duplicate(certificate.Handle))
+                    using (SafeX509Handle certHandle = Crypto.X509UpRef(certificate.Handle))
                     {
                         using (SafeX509NameHandle nameHandle = Crypto.DuplicateX509Name(Crypto.X509GetIssuerName(certHandle)))
                         {

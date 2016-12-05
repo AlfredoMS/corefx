@@ -11,22 +11,35 @@ namespace System.IO.Tests
     {
         public static readonly byte[] TestBuffer = { 0xBA, 0x5E, 0xBA, 0x11, 0xF0, 0x07, 0xBA, 0x11 };
 
-        protected const PlatformID CaseInsensitivePlatforms = PlatformID.Windows | PlatformID.OSX;
-        protected const PlatformID CaseSensitivePlatforms = PlatformID.AnyUnix & ~PlatformID.OSX;
+        protected const TestPlatforms CaseInsensitivePlatforms = TestPlatforms.Windows | TestPlatforms.OSX;
+        protected const TestPlatforms CaseSensitivePlatforms = TestPlatforms.AnyUnix & ~TestPlatforms.OSX;
 
-        // In some cases (such as when running without elevated privileges),
-        // the symbolic link may fail to create. Only run this test if it creates
-        // links successfully.
+        /// <summary>
+        /// In some cases (such as when running without elevated privileges),
+        /// the symbolic link may fail to create. Only run this test if it creates
+        /// links successfully.
+        /// </summary>
         protected static bool CanCreateSymbolicLinks
         {
             get
             {
-                var path = Path.GetTempFileName();
-                var linkPath = path + ".link";
-                var ret = MountHelper.CreateSymbolicLink(linkPath, path, isDirectory: false);
+                bool success = true;
+
+                // Verify file symlink creation
+                string path = Path.GetTempFileName();
+                string linkPath = path + ".link";
+                success = MountHelper.CreateSymbolicLink(linkPath, path, isDirectory: false);
                 try { File.Delete(path); } catch { }
                 try { File.Delete(linkPath); } catch { }
-                return ret;
+
+                // Verify directory symlink creation
+                path = Path.GetTempFileName();
+                linkPath = path + ".link";
+                success = success && MountHelper.CreateSymbolicLink(linkPath, path, isDirectory: true);
+                try { Directory.Delete(path); } catch { }
+                try { Directory.Delete(linkPath); } catch { }
+
+                return success;
             }
         }
 

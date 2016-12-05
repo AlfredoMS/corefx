@@ -2,7 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using Xunit;
@@ -76,10 +75,10 @@ namespace System.Linq.Expressions.Tests
             {
                 Expression[] expressions = expressionList.ToArray();
                 expressions[i] = null;
-                Assert.Throws<ArgumentNullException>("expressions", () => Expression.Block(SingleParameter, expressions));
-                Assert.Throws<ArgumentNullException>("expressions", () => Expression.Block(SingleParameter, expressions.Skip(0)));
-                Assert.Throws<ArgumentNullException>("expressions", () => Expression.Block(typeof(int), SingleParameter, expressions));
-                Assert.Throws<ArgumentNullException>("expressions", () => Expression.Block(typeof(int), SingleParameter, expressions.Skip(0)));
+                Assert.Throws<ArgumentNullException>($"expressions[{i}]", () => Expression.Block(SingleParameter, expressions));
+                Assert.Throws<ArgumentNullException>($"expressions[{i}]", () => Expression.Block(SingleParameter, expressions.Skip(0)));
+                Assert.Throws<ArgumentNullException>($"expressions[{i}]", () => Expression.Block(typeof(int), SingleParameter, expressions));
+                Assert.Throws<ArgumentNullException>($"expressions[{i}]", () => Expression.Block(typeof(int), SingleParameter, expressions.Skip(0)));
             }
         }
 
@@ -92,10 +91,10 @@ namespace System.Linq.Expressions.Tests
             {
                 Expression[] expressions = expressionList.ToArray();
                 expressions[i] = UnreadableExpression;
-                Assert.Throws<ArgumentException>("expressions", () => Expression.Block(SingleParameter, expressions));
-                Assert.Throws<ArgumentException>("expressions", () => Expression.Block(SingleParameter, expressions.Skip(0)));
-                Assert.Throws<ArgumentException>("expressions", () => Expression.Block(typeof(int), SingleParameter, expressions));
-                Assert.Throws<ArgumentException>("expressions", () => Expression.Block(typeof(int), SingleParameter, expressions.Skip(0)));
+                Assert.Throws<ArgumentException>($"expressions[{i}]", () => Expression.Block(SingleParameter, expressions));
+                Assert.Throws<ArgumentException>($"expressions[{i}]", () => Expression.Block(SingleParameter, expressions.Skip(0)));
+                Assert.Throws<ArgumentException>($"expressions[{i}]", () => Expression.Block(typeof(int), SingleParameter, expressions));
+                Assert.Throws<ArgumentException>($"expressions[{i}]", () => Expression.Block(typeof(int), SingleParameter, expressions.Skip(0)));
             }
         }
 

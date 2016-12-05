@@ -3,7 +3,6 @@
 // See the LICENSE file in the project root for more information.
 
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using Xunit;
 
@@ -12,7 +11,7 @@ namespace System.Collections.Tests
     /// <summary>
     /// Contains tests that ensure the correctness of the Stack class.
     /// </summary>
-    public abstract class Stack_Generic_Tests<T> : IGenericSharedAPI_Tests<T>
+    public abstract partial class Stack_Generic_Tests<T> : IGenericSharedAPI_Tests<T>
     {
         #region Stack<T> Helper Methods
 
@@ -57,7 +56,7 @@ namespace System.Collections.Tests
         #endregion
 
         #region Constructor
-        
+
         [Fact]
         public void Stack_Generic_Constructor_InitialValues()
         {

@@ -60,9 +60,6 @@ namespace System.ComponentModel
     /// </summary>
     internal sealed class ReflectEventDescriptor : EventDescriptor
     {
-        private static readonly Type[] s_argsNone = new Type[0];
-        private static readonly object s_noDefault = new object();
-
         private Type _type;           // the delegate type for the event
         private readonly Type _componentClass; // the class of the component this info is for
 
@@ -91,7 +88,7 @@ namespace System.ComponentModel
         }
 
         public ReflectEventDescriptor(Type componentClass, EventInfo eventInfo)
-            : base(eventInfo.Name, new Attribute[0])
+            : base(eventInfo.Name, Array.Empty<Attribute>())
         {
             if (componentClass == null)
             {
@@ -165,7 +162,6 @@ namespace System.ComponentModel
             if (component != null)
             {
                 ISite site = GetSite(component);
-#if FEATURE_ICOMPONENTCHANGESERVICE
                 IComponentChangeService changeService = null;
 
                 // Announce that we are about to change this component
@@ -177,7 +173,6 @@ namespace System.ComponentModel
 
                 if (changeService != null)
                 {
-#if FEATURE_CHECKOUTEXCEPTION
                     try {
                         changeService.OnComponentChanging(component, this);
                     }
@@ -187,11 +182,8 @@ namespace System.ComponentModel
                         }
                         throw coEx;
                     }
-#else
                     changeService.OnComponentChanging(component, this);
-#endif // FEATURE_CHECKOUTEXCEPTION
                 }
-#endif // FEATURE_ICOMPONENTCHANGESERVICE
 
                 bool shadowed = false;
 
@@ -217,14 +209,12 @@ namespace System.ComponentModel
                     _addMethod.Invoke(component, new[] { value });
                 }
 
-#if FEATURE_ICOMPONENTCHANGESERVICE
                 // Now notify the change service that the change was successful.
                 //
                 if (changeService != null)
                 {
                     changeService.OnComponentChanged(component, this, null, value);
                 }
-#endif
             }
         }
 
@@ -276,11 +266,7 @@ namespace System.ComponentModel
         {
             string eventName = realEventInfo.Name;
             BindingFlags bindingFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly;
-#if FEATURE_MEMBERINFO_REFLECTEDTYPE
             Type currentReflectType = realEventInfo.ReflectedType;
-#else
-            Type currentReflectType = _componentClass;
-#endif
             Debug.Assert(currentReflectType != null, "currentReflectType cannot be null");
             int depth = 0;
 
@@ -297,11 +283,7 @@ namespace System.ComponentModel
             {
                 // Now build up an array in reverse order
                 //
-#if FEATURE_MEMBERINFO_REFLECTEDTYPE
                 currentReflectType = realEventInfo.ReflectedType;
-#else
-                currentReflectType = _componentClass;
-#endif
                 Attribute[][] attributeStack = new Attribute[depth][];
 
                 while (currentReflectType != typeof(object))
@@ -409,11 +391,7 @@ namespace System.ComponentModel
         {
             string methodName = realMethodInfo.Name;
             BindingFlags bindingFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly;
-#if FEATURE_MEMBERINFO_REFLECTEDTYPE
-            Type currentReflectType = realEventInfo.ReflectedType;
-#else
-            Type currentReflectType = _componentClass;
-#endif
+            Type currentReflectType = realMethodInfo.ReflectedType;
             Debug.Assert(currentReflectType != null, "currentReflectType cannot be null");
 
             // First, calculate the depth of the object hierarchy.  We do this so we can do a single
@@ -430,11 +408,7 @@ namespace System.ComponentModel
             {
                 // Now build up an array in reverse order
                 //
-#if FEATURE_MEMBERINFO_REFLECTEDTYPE
-                currentReflectType = realEventInfo.ReflectedType;
-#else
-                currentReflectType = _componentClass;
-#endif
+                currentReflectType = realMethodInfo.ReflectedType;
                 Attribute[][] attributeStack = new Attribute[depth][];
 
                 while (currentReflectType != null && currentReflectType != typeof(object))
@@ -482,7 +456,6 @@ namespace System.ComponentModel
             if (component != null)
             {
                 ISite site = GetSite(component);
-#if FEATURE_ICOMPONENTCHANGESERVICE
                 IComponentChangeService changeService = null;
 
                 // Announce that we are about to change this component
@@ -494,7 +467,6 @@ namespace System.ComponentModel
 
                 if (changeService != null)
                 {
-#if FEATURE_CHECKOUTEXCEPTION
                     try {
                         changeService.OnComponentChanging(component, this);
                     }
@@ -504,11 +476,9 @@ namespace System.ComponentModel
                         }
                         throw coEx;
                     }
-#else
                     changeService.OnComponentChanging(component, this);
-#endif // FEATURE_CHECKOUTEXCEPTION
                 }
-#endif // FEATURE_ICOMPONENTCHANGESERVICE
+
                 bool shadowed = false;
 
                 if (site != null && site.DesignMode)
@@ -528,14 +498,12 @@ namespace System.ComponentModel
                     _removeMethod.Invoke(component, new[] { value });
                 }
 
-#if FEATURE_ICOMPONENTCHANGESERVICE
                 // Now notify the change service that the change was successful.
                 //
                 if (changeService != null)
                 {
                     changeService.OnComponentChanged(component, this, null, value);
                 }
-#endif
             }
         }
     }

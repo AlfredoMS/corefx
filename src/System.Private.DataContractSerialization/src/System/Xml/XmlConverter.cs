@@ -555,8 +555,6 @@ namespace System.Xml
                 int offsetMax = offset + count;
                 if (chars[offset] == '-')
                 {
-                    if (count == 1)
-                        return false;
                     for (int i = offset + 1; i < offsetMax; i++)
                     {
                         int digit = (chars[i] - '0');
@@ -742,7 +740,6 @@ namespace System.Xml
             return count + ToCharsR((int)value, chars, offset);
         }
 
-        [SecuritySafeCritical]
         private static unsafe bool IsNegativeZero(float value)
         {
             // Simple equals function will report that -0 is equal to +0, so compare bits instead
@@ -750,7 +747,6 @@ namespace System.Xml
             return (*(Int32*)&value == *(Int32*)&negativeZero);
         }
 
-        [SecuritySafeCritical]
         private static unsafe bool IsNegativeZero(double value)
         {
             // Simple equals function will report that -0 is equal to +0, so compare bits instead

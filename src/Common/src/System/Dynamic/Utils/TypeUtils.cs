@@ -13,11 +13,6 @@ namespace System.Dynamic.Utils
             return t1.IsEquivalentTo(t2);
         }
 
-        public static bool IsEquivalentTo(this Type t1, Type t2)
-        {
-            return t1 == t2;
-        }
-
         public static bool AreReferenceAssignable(Type dest, Type src)
         {
             // This actually implements "Is this identity assignable and/or reference assignable?"
@@ -39,12 +34,17 @@ namespace System.Dynamic.Utils
 
         public static void ValidateType(Type type, string paramName)
         {
+            ValidateType(type, paramName, -1);
+        }
+
+        public static void ValidateType(Type type, string paramName, int index)
+        {
             if (type != typeof(void))
             {
                 // A check to avoid a bunch of reflection (currently not supported) during cctor
                 if (type.GetTypeInfo().ContainsGenericParameters)
                 {
-                    throw type.GetTypeInfo().IsGenericTypeDefinition ? Error.TypeIsGeneric(type, paramName) : Error.TypeContainsGenericParameters(type, paramName);
+                    throw type.GetTypeInfo().IsGenericTypeDefinition ? Error.TypeIsGeneric(type, paramName, index) : Error.TypeContainsGenericParameters(type, paramName, index);
                 }
             }
         }
@@ -79,7 +79,7 @@ namespace System.Dynamic.Utils
             // that allows mscorlib types to be specialized by types in other
             // assemblies.
 
-            var asm = t.GetTypeInfo().Assembly;
+            Assembly asm = t.GetTypeInfo().Assembly;
             if (asm != _mscorlib)
             {
                 // Not in mscorlib or our assembly
@@ -90,7 +90,7 @@ namespace System.Dynamic.Utils
             {
                 foreach (Type g in t.GetGenericArguments())
                 {
-                    if (!CanCache(g))
+                    if (!g.CanCache())
                     {
                         return false;
                     }

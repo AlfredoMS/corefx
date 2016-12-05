@@ -2,8 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using System;
-using System.Reflection;
 using Xunit;
 
 namespace System.Linq.Expressions.Tests
@@ -100,6 +98,13 @@ namespace System.Linq.Expressions.Tests
             {
                 VerifyArithmeticUnaryPlusDecimal(values[i], useInterpreter);
             }
+        }
+
+        [Fact]
+        public static void ToStringTest()
+        {
+            UnaryExpression e = Expression.UnaryPlus(Expression.Parameter(typeof(int), "x"));
+            Assert.Equal("+x", e.ToString());
         }
 
         #endregion

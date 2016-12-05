@@ -13,6 +13,11 @@ namespace System.Net.Sockets
             Client = CreateSocket();
         }
 
+        private void DisposeCore()
+        {
+            // Nop.  No additional state that needs to be disposed of.
+        }
+
         // Used by the class to provide the underlying network socket.
         private Socket ClientCore
         {
@@ -20,52 +25,49 @@ namespace System.Net.Sockets
             set { _clientSocket = value; }
         }
 
-        private int AvailableCore { get { return _clientSocket.Available; } }
+        private int AvailableCore
+        {
+            get
+            {
+                // If we have a client socket, return its available value.
+                // Otherwise, there isn't data available, so return 0.
+                return _clientSocket?.Available ?? 0;
+            }
+        }
 
-        private bool ConnectedCore { get { return _clientSocket.Connected; } }
+        private bool ConnectedCore
+        {
+            get
+            {
+                // If we have a client socket, return whether it's connected.
+                // Otherwise as we don't have a socket, by definition it's not.
+                return _clientSocket?.Connected ?? false;
+            }
+        }
 
         private bool ExclusiveAddressUseCore
         {
             get
             {
-                return _clientSocket.ExclusiveAddressUse;
+                return _clientSocket?.ExclusiveAddressUse ?? false;
             }
             set
             {
-                _clientSocket.ExclusiveAddressUse = value;
+                if (_clientSocket != null)
+                {
+                    _clientSocket.ExclusiveAddressUse = value;
+                }
             }
         }
 
-        private IAsyncResult BeginConnect(string host, int port, AsyncCallback requestCallback, object state)
+        private Task ConnectAsyncCore(IPAddress address, int port)
         {
-            if (NetEventSource.Log.IsEnabled())
-            {
-                NetEventSource.Enter(NetEventSource.ComponentType.Socket, this, "BeginConnect", host);
-            }
-
-            IAsyncResult result = Client.BeginConnect(host, port, requestCallback, state);
-            if (NetEventSource.Log.IsEnabled())
-            {
-                NetEventSource.Exit(NetEventSource.ComponentType.Socket, this, "BeginConnect", null);
-            }
-
-            return result;
-        }
-
-        private IAsyncResult BeginConnect(IPAddress[] addresses, int port, AsyncCallback requestCallback, object state)
-        {
-            if (NetEventSource.Log.IsEnabled())
-            {
-                NetEventSource.Enter(NetEventSource.ComponentType.Socket, this, "BeginConnect", addresses);
-            }
-
-            IAsyncResult result = Client.BeginConnect(addresses, port, requestCallback, state);
-            if (NetEventSource.Log.IsEnabled())
-            {
-                NetEventSource.Exit(NetEventSource.ComponentType.Socket, this, "BeginConnect", null);
-            }
-
-            return result;
+            return Task.Factory.FromAsync(
+                (targetAddess, targetPort, callback, state) => ((TcpClient)state).BeginConnect(targetAddess, targetPort, callback, state),
+                asyncResult => ((TcpClient)asyncResult.AsyncState).EndConnect(asyncResult),
+                address,
+                port,
+                state: this);
         }
 
         private Task ConnectAsyncCore(string host, int port)
@@ -87,6 +89,18 @@ namespace System.Net.Sockets
                 port,
                 state: this);
         }
+
+        private IAsyncResult BeginConnectCore(string host, int port, AsyncCallback requestCallback, object state) =>
+            Client.BeginConnect(host, port, requestCallback, state);
+
+        private IAsyncResult BeginConnectCore(IPAddress address, int port, AsyncCallback requestCallback, object state) =>
+            Client.BeginConnect(address, port, requestCallback, state);
+
+        private IAsyncResult BeginConnectCore(IPAddress[] addresses, int port, AsyncCallback requestCallback, object state) =>
+            Client.BeginConnect(addresses, port, requestCallback, state);
+
+        private void EndConnectCore(Socket socket, IAsyncResult asyncResult) =>
+            socket.EndConnect(asyncResult);
 
         // Gets or sets the size of the receive buffer in bytes.
         private int ReceiveBufferSizeCore

@@ -8,6 +8,7 @@ using System.ComponentModel;
 using System.Globalization;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Security;
 using System.Text;
 using System.Threading;
 
@@ -34,6 +35,18 @@ namespace System.Diagnostics
         public static void LeaveDebugMode()
         {
             // Nop.
+        }
+
+        [CLSCompliant(false)]
+        public static Process Start(string fileName, string userName, SecureString password, string domain)
+        {
+            throw new PlatformNotSupportedException();
+        }
+
+        [CLSCompliant(false)]
+        public static Process Start(string fileName, string arguments, string userName, SecureString password, string domain)
+        { 
+            throw new PlatformNotSupportedException();
         }
 
         /// <summary>Stops the associated process immediately.</summary>
@@ -240,14 +253,11 @@ namespace System.Diagnostics
             // is used to fork/execve as executing managed code in a forked process is not safe (only
             // the calling thread will transfer, thread IDs aren't stable across the fork, etc.)
             int childPid, stdinFd, stdoutFd, stderrFd;
-            if (Interop.Sys.ForkAndExecProcess(
+            Interop.Sys.ForkAndExecProcess(
                 filename, argv, envp, cwd,
                 startInfo.RedirectStandardInput, startInfo.RedirectStandardOutput, startInfo.RedirectStandardError,
-                out childPid, 
-                out stdinFd, out stdoutFd, out stderrFd) != 0)
-            {
-                throw new Win32Exception();
-            }
+                out childPid,
+                out stdinFd, out stdoutFd, out stderrFd);
 
             // Store the child's information into this Process object.
             Debug.Assert(childPid >= 0);
@@ -522,5 +532,21 @@ namespace System.Diagnostics
             return _waitStateHolder._state;
         }
 
+        private bool IsRespondingCore()
+        {
+            return true;
+        }
+        private string GetMainWindowTitle()
+        {
+            return string.Empty;
+        }
+        private bool CloseMainWindowCore()
+        {
+            return false;
+        }
+        private bool WaitForInputIdleCore(int milliseconds)
+        {
+            throw new InvalidOperationException(SR.InputIdleUnkownError);
+        }
     }
 }

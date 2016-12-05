@@ -2,7 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using System;
 using Xunit;
 
 namespace System.Linq.Expressions.Tests
@@ -89,6 +88,13 @@ namespace System.Linq.Expressions.Tests
             {
                 VerifyDecrementDouble(values[i], useInterpreter);
             }
+        }
+
+        [Fact]
+        public static void ToStringTest()
+        {
+            UnaryExpression e = Expression.Decrement(Expression.Parameter(typeof(int), "x"));
+            Assert.Equal("Decrement(x)", e.ToString());
         }
 
         #endregion

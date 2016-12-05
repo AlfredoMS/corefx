@@ -2,10 +2,12 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using System.Diagnostics;
+using System.Linq;
+using System.Reflection;
+using System.Runtime.CompilerServices;
 using Xunit;
 
-namespace System.Threading.Tasks.Channels.Tests
+namespace System.Threading.Tasks.Tests
 {
     public class ValueTaskTests
     {
@@ -125,31 +127,31 @@ namespace System.Threading.Tasks.Channels.Tests
         }
 
         [Fact]
-        public void Awaiter_OnCompleted()
+        public async Task Awaiter_OnCompleted()
         {
             // Since ValueTask implements both OnCompleted and UnsafeOnCompleted,
             // OnCompleted typically won't be used by await, so we add an explicit test
             // for it here.
 
             ValueTask<int> t = new ValueTask<int>(42);
-            var mres = new ManualResetEventSlim();
-            t.GetAwaiter().OnCompleted(() => mres.Set());
-            Assert.True(mres.Wait(10000));
+            var tcs = new TaskCompletionSource<bool>();
+            t.GetAwaiter().OnCompleted(() => tcs.SetResult(true));
+            await tcs.Task;
         }
 
         [Theory]
         [InlineData(true)]
         [InlineData(false)]
-        public void ConfiguredAwaiter_OnCompleted(bool continueOnCapturedContext)
+        public async Task ConfiguredAwaiter_OnCompleted(bool continueOnCapturedContext)
         {
             // Since ValueTask implements both OnCompleted and UnsafeOnCompleted,
             // OnCompleted typically won't be used by await, so we add an explicit test
             // for it here.
 
             ValueTask<int> t = new ValueTask<int>(42);
-            var mres = new ManualResetEventSlim();
-            t.ConfigureAwait(continueOnCapturedContext).GetAwaiter().OnCompleted(() => mres.Set());
-            Assert.True(mres.Wait(10000));
+            var tcs = new TaskCompletionSource<bool>();
+            t.ConfigureAwait(continueOnCapturedContext).GetAwaiter().OnCompleted(() => tcs.SetResult(true));
+            await tcs.Task;
         }
 
         [Fact]
@@ -310,6 +312,20 @@ namespace System.Threading.Tasks.Channels.Tests
             Assert.Same(string.Empty, new ValueTask<string>(Task.FromResult<string>(null)).ToString());
 
             Assert.Same(string.Empty, new ValueTask<DateTime>(new TaskCompletionSource<DateTime>().Task).ToString());
+        }
+
+        [Theory]
+        [InlineData(typeof(ValueTask<>))]
+        [InlineData(typeof(ValueTask<int>))]
+        [InlineData(typeof(ValueTask<string>))]
+        public void AsyncMethodBuilderAttribute_ValueTaskAttributed(Type valueTaskType)
+        {
+            CustomAttributeData cad = valueTaskType.GetTypeInfo().CustomAttributes.Single(attr => attr.AttributeType == typeof(AsyncMethodBuilderAttribute));
+            Type builderTypeCtorArg = (Type)cad.ConstructorArguments[0].Value;
+            Assert.Equal(typeof(AsyncValueTaskMethodBuilder<>), builderTypeCtorArg);
+
+            AsyncMethodBuilderAttribute amba = valueTaskType.GetTypeInfo().GetCustomAttribute<AsyncMethodBuilderAttribute>();
+            Assert.Equal(builderTypeCtorArg, amba.BuilderType);
         }
 
         private sealed class TrackingSynchronizationContext : SynchronizationContext

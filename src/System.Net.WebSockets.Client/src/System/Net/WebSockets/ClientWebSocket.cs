@@ -19,7 +19,7 @@ namespace System.Net.WebSockets
         }
 
         private readonly ClientWebSocketOptions _options;
-        private WebSocketHandle _innerWebSocket; // mutable struct; do not make readonly
+        private WebSocketHandle _innerWebSocket; // may be mutable struct; do not make readonly
 
         // NOTE: this is really an InternalState value, but Interlocked doesn't support
         //       operations on values of enum types.
@@ -27,20 +27,13 @@ namespace System.Net.WebSockets
 
         public ClientWebSocket()
         {
-            if (NetEventSource.Log.IsEnabled())
-            {
-                NetEventSource.Enter(NetEventSource.ComponentType.WebSocket, this, ".ctor", null);
-            }
-
+            if (NetEventSource.IsEnabled) NetEventSource.Enter(this);
             WebSocketHandle.CheckPlatformSupport();
 
             _state = (int)InternalState.Created;
             _options = new ClientWebSocketOptions();
 
-            if (NetEventSource.Log.IsEnabled())
-            {
-                NetEventSource.Exit(NetEventSource.ComponentType.WebSocket, this, ".ctor", null);
-            }
+            if (NetEventSource.IsEnabled) NetEventSource.Exit(this);
         }
 
         #region Properties
@@ -57,7 +50,7 @@ namespace System.Net.WebSockets
         {
             get
             {
-                if (_innerWebSocket.IsValid)
+                if (WebSocketHandle.IsValid(_innerWebSocket))
                 {
                     return _innerWebSocket.CloseStatus;
                 }
@@ -69,7 +62,7 @@ namespace System.Net.WebSockets
         {
             get
             {
-                if (_innerWebSocket.IsValid)
+                if (WebSocketHandle.IsValid(_innerWebSocket))
                 {
                     return _innerWebSocket.CloseStatusDescription;
                 }
@@ -81,7 +74,7 @@ namespace System.Net.WebSockets
         {
             get
             {
-                if (_innerWebSocket.IsValid)
+                if (WebSocketHandle.IsValid(_innerWebSocket))
                 {
                     return _innerWebSocket.SubProtocol;
                 }
@@ -94,7 +87,7 @@ namespace System.Net.WebSockets
             get
             {
                 // state == Connected or Disposed
-                if (_innerWebSocket.IsValid)
+                if (WebSocketHandle.IsValid(_innerWebSocket))
                 {
                     return _innerWebSocket.State;
                 }
@@ -160,10 +153,7 @@ namespace System.Net.WebSockets
             }
             catch (Exception ex)
             {
-                if (NetEventSource.Log.IsEnabled())
-                {
-                    NetEventSource.Exception(NetEventSource.ComponentType.WebSocket, this, nameof(ConnectAsync), ex);
-                }
+                if (NetEventSource.IsEnabled) NetEventSource.Error(this, ex);
                 throw;
             }
         }
@@ -172,21 +162,6 @@ namespace System.Net.WebSockets
             CancellationToken cancellationToken)
         {
             ThrowIfNotConnected();
-
-            if (!((messageType == WebSocketMessageType.Text) || (messageType == WebSocketMessageType.Binary)))
-            {
-                string errorMessage = SR.Format(
-                        SR.net_WebSockets_Argument_InvalidMessageType,
-                        nameof(WebSocketMessageType.Close),
-                        nameof(SendAsync),
-                        nameof(WebSocketMessageType.Binary),
-                        nameof(WebSocketMessageType.Text),
-                        nameof(CloseOutputAsync));
-
-                throw new ArgumentException(errorMessage, nameof(messageType));
-            }
-
-            WebSocketValidate.ValidateArraySegment<byte>(buffer, nameof(buffer));
             return _innerWebSocket.SendAsync(buffer, messageType, endOfMessage, cancellationToken);
         }
 
@@ -194,7 +169,6 @@ namespace System.Net.WebSockets
             CancellationToken cancellationToken)
         {
             ThrowIfNotConnected();
-            WebSocketValidate.ValidateArraySegment<byte>(buffer, nameof(buffer));
             return _innerWebSocket.ReceiveAsync(buffer, cancellationToken);
         }
 
@@ -202,7 +176,6 @@ namespace System.Net.WebSockets
             CancellationToken cancellationToken)
         {
             ThrowIfNotConnected();
-            WebSocketValidate.ValidateCloseStatus(closeStatus, statusDescription);
             return _innerWebSocket.CloseAsync(closeStatus, statusDescription, cancellationToken);
         }
 
@@ -210,7 +183,6 @@ namespace System.Net.WebSockets
             CancellationToken cancellationToken)
         {
             ThrowIfNotConnected();
-            WebSocketValidate.ValidateCloseStatus(closeStatus, statusDescription);
             return _innerWebSocket.CloseOutputAsync(closeStatus, statusDescription, cancellationToken);
         }
 
@@ -220,7 +192,7 @@ namespace System.Net.WebSockets
             {
                 return;
             }
-            if (_innerWebSocket.IsValid)
+            if (WebSocketHandle.IsValid(_innerWebSocket))
             {
                 _innerWebSocket.Abort();
             }
@@ -235,21 +207,9 @@ namespace System.Net.WebSockets
                 // No cleanup required.
                 return;
             }
-            if (_innerWebSocket.IsValid)
+            if (WebSocketHandle.IsValid(_innerWebSocket))
             {
                 _innerWebSocket.Dispose();
-            }
-        }
-
-        private void ThrowIfNotConnected()
-        {
-            if ((InternalState)_state == InternalState.Disposed)
-            {
-                throw new ObjectDisposedException(GetType().FullName);
-            }
-            else if ((InternalState)_state != InternalState.Connected)
-            {
-                throw new InvalidOperationException(SR.net_WebSockets_NotConnected);
             }
         }
 
@@ -279,6 +239,18 @@ namespace System.Net.WebSockets
             throw new WebSocketException(
                 WebSocketError.InvalidState,
                 SR.Format(SR.net_WebSockets_InvalidState, currentState, validStatesText));
+        }
+
+        private void ThrowIfNotConnected()
+        {
+            if ((InternalState)_state == InternalState.Disposed)
+            {
+                throw new ObjectDisposedException(GetType().FullName);
+            }
+            else if ((InternalState)_state != InternalState.Connected)
+            {
+                throw new InvalidOperationException(SR.net_WebSockets_NotConnected);
+            }
         }
     }
 }

@@ -474,16 +474,12 @@ namespace Microsoft.CSharp.RuntimeBinder
                         CType bestType;
 
                         bool res = _semanticChecker.GetTypeManager().GetBestAccessibleType(_semanticChecker, _bindingContext, actualType, out bestType);
-                        if (!res)
-                        {
-                            // Since the actual type of these arguments are never going to be pointer
-                            // types or ref/out types (they are in fact boxed into an object), we have
-                            // a guarantee that we will always be able to find a best accessible type
-                            // (which, in the worst case, may be object). However, just to be super
-                            // paranoid, let's not let a null type get back into the system.
-                            Debug.Assert(false, "Unexpected failure of GetBestAccessibleType in construction of argument array");
-                            t = typeof(object);
-                        }
+                        
+                        // Since the actual type of these arguments are never going to be pointer
+                        // types or ref/out types (they are in fact boxed into an object), we have
+                        // a guarantee that we will always be able to find a best accessible type
+                        // (which, in the worst case, may be object).
+                        Debug.Assert(res, "Unexpected failure of GetBestAccessibleType in construction of argument array");
 
                         t = bestType.AssociatedSystemType;
                     }
@@ -1918,7 +1914,6 @@ namespace Microsoft.CSharp.RuntimeBinder
             string name = GetName(payload);
 
             // Find the lhs and rhs.
-            EXPR lhs;
             EXPR indexerArguments = null;
             bool bIsCompound = false;
 
@@ -1933,7 +1928,7 @@ namespace Microsoft.CSharp.RuntimeBinder
                 bIsCompound = (payload as CSharpSetMemberBinder).IsCompoundAssignment;
             }
             _symbolTable.PopulateSymbolTableWithName(name, null, arguments[0].Type);
-            lhs = BindProperty(payload, arguments[0], dictionary[0], indexerArguments, false);
+            EXPR lhs = BindProperty(payload, arguments[0], dictionary[0], indexerArguments, false);
 
             int indexOfLast = arguments.Length - 1;
             EXPR rhs = CreateArgumentEXPR(arguments[indexOfLast], dictionary[indexOfLast]);

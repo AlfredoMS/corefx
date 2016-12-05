@@ -13,11 +13,12 @@
 ===========================================================*/
 
 using System;
-using System.Runtime;
 using System.Diagnostics;
-using System.Threading;
-using System.Runtime.CompilerServices;
 using System.Diagnostics.Contracts;
+using System.Runtime;
+using System.Runtime.CompilerServices;
+using System.Runtime.Serialization;
+using System.Threading;
 
 namespace System.Collections
 {
@@ -44,7 +45,7 @@ namespace System.Collections
             77028803, 92434613, 110921543, 133105859, 159727031, 191672443, 230006941, 276008387, 331210079,
             397452101, 476942527, 572331049, 686797261, 824156741, 988988137, 1186785773, 1424142949, 1708971541,
             2050765853, MaxPrimeArrayLength };
-        
+
         public static int GetPrime(int min)
         {
             if (min < 0)
@@ -79,5 +80,11 @@ namespace System.Collections
 
         // This is the maximum prime smaller than Array.MaxArrayLength
         public const int MaxPrimeArrayLength = 0x7FEFFFFD;
+
+        private static ConditionalWeakTable<object, SerializationInfo> s_serializationInfoTable;
+
+        internal static ConditionalWeakTable<object, SerializationInfo> SerializationInfoTable => LazyInitializer.EnsureInitialized(ref s_serializationInfoTable);
+
+        internal static object GetEqualityComparerForSerialization(object comparer) => comparer;
     }
 }

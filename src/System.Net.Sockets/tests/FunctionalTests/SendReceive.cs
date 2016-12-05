@@ -528,72 +528,84 @@ namespace System.Net.Sockets.Tests
             Assert.Equal(sentChecksum.Sum, receivedChecksum.Sum);
         }
 
+        [OuterLoop] // TODO: Issue #11345
         [Fact]
         public void SendToRecvFrom_Single_Datagram_UDP_IPv6()
         {
             SendToRecvFrom_Datagram_UDP(IPAddress.IPv6Loopback, IPAddress.IPv6Loopback);
         }
 
+        [OuterLoop] // TODO: Issue #11345
         [Fact]
         public void SendToRecvFromAPM_Single_Datagram_UDP_IPv6()
         {
             SendToRecvFromAPM_Datagram_UDP(IPAddress.IPv6Loopback, IPAddress.IPv6Loopback);
         }
 
+        [OuterLoop] // TODO: Issue #11345
         [Fact]
         public void SendToRecvFrom_Single_Datagram_UDP_IPv4()
         {
             SendToRecvFrom_Datagram_UDP(IPAddress.Loopback, IPAddress.Loopback);
         }
 
+        [OuterLoop] // TODO: Issue #11345
         [Fact]
         public void SendToRecvFromAPM_Single_Datagram_UDP_IPv4()
         {
             SendToRecvFromAPM_Datagram_UDP(IPAddress.Loopback, IPAddress.Loopback);
         }
 
+        [OuterLoop] // TODO: Issue #11345
         [Fact]
         public void SendRecv_Multiple_Stream_TCP_IPv6()
         {
             SendRecv_Stream_TCP(IPAddress.IPv6Loopback, useMultipleBuffers: true);
         }
 
+        [OuterLoop] // TODO: Issue #11345
         [Fact]
         public void SendRecvAPM_Multiple_Stream_TCP_IPv6()
         {
             SendRecvAPM_Stream_TCP(IPAddress.IPv6Loopback, useMultipleBuffers: true);
         }
 
+        [OuterLoop] // TODO: Issue #11345
         [Fact]
         public void SendRecv_Single_Stream_TCP_IPv6()
         {
             SendRecv_Stream_TCP(IPAddress.IPv6Loopback, useMultipleBuffers: false);
         }
 
+        [OuterLoop] // TODO: Issue #11345
         [Fact]
         public void SendRecvAPM_Single_Stream_TCP_IPv6()
         {
             SendRecvAPM_Stream_TCP(IPAddress.IPv6Loopback, useMultipleBuffers: false);
         }
 
+        [OuterLoop] // TODO: Issue #11345
         [Fact]
         public void SendRecv_Multiple_Stream_TCP_IPv4()
         {
             SendRecv_Stream_TCP(IPAddress.Loopback, useMultipleBuffers: true);
         }
 
+        [OuterLoop] // TODO: Issue #11345
         [Fact]
         public void SendRecvAPM_Multiple_Stream_TCP_IPv4()
         {
             SendRecvAPM_Stream_TCP(IPAddress.Loopback, useMultipleBuffers: true);
         }
 
+        [OuterLoop] // TODO: Issue #11345
         [Fact]
         public void SendRecv_Single_Stream_TCP_IPv4()
         {
             SendRecv_Stream_TCP(IPAddress.Loopback, useMultipleBuffers: false);
         }
 
+        [OuterLoop] // TODO: Issue #11345
         [Fact]
         public void SendRecvAPM_Single_Stream_TCP_IPv4()
         {
@@ -606,6 +618,7 @@ namespace System.Net.Sockets.Tests
             new object[] { IPAddress.Loopback, IPAddress.Loopback }
         };
 
+        [OuterLoop] // TODO: Issue #11345
         [Theory]
         [MemberData(nameof(SendToRecvFromAsync_Datagram_UDP_Socket_MemberData))]
         public void SendToRecvFromAsync_Datagram_UDP(IPAddress leftAddress, IPAddress rightAddress)
@@ -739,6 +752,7 @@ namespace System.Net.Sockets.Tests
             new object[] { IPAddress.Loopback, IPAddress.Loopback }
         };
 
+        [OuterLoop] // TODO: Issue #11345
         [Theory]
         [MemberData(nameof(SendToRecvFromAsync_Datagram_UDP_Socket_MemberData))]
         public void SendToRecvFromAsync_Datagram_UDP_UdpClient(IPAddress leftAddress, IPAddress rightAddress)
@@ -822,6 +836,7 @@ namespace System.Net.Sockets.Tests
             new object[] { IPAddress.Loopback, false },
         };
 
+        [OuterLoop] // TODO: Issue #11345
         [Theory]
         [MemberData(nameof(SendRecvAsync_Stream_TCP_MemberData))]
         public void SendRecvAsync_Stream_TCP(IPAddress listenAt, bool useMultipleBuffers)
@@ -1015,6 +1030,7 @@ namespace System.Net.Sockets.Tests
             new object[] { IPAddress.IPv6Loopback },
         };
 
+        [OuterLoop] // TODO: Issue #11345
         [Theory]
         [MemberData(nameof(SendRecvAsync_TcpListener_TcpClient_MemberData))]
         public void SendRecvAsync_TcpListener_TcpClient(IPAddress listenAt)
@@ -1093,6 +1109,7 @@ namespace System.Net.Sockets.Tests
             new object[] { IPAddress.IPv6Loopback, false },
         };
 
+        [OuterLoop] // TODO: Issue #11345
         [Theory]
         [MemberData(nameof(SendRecvPollSync_TcpListener_TcpClient_MemberData))]
         public void SendRecvPollSync_TcpListener_Socket(IPAddress listenAt, bool pollBeforeOperation)
@@ -1172,6 +1189,54 @@ namespace System.Net.Sockets.Tests
             finally
             {
                 listener.Stop();
+            }
+        }
+
+        [ActiveIssue(13778, TestPlatforms.OSX)]
+        [Fact]
+        public static async Task SendRecvAsync_0ByteReceive_Success()
+        {
+            using (Socket listener = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp))
+            using (Socket client = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp))
+            {
+                listener.Bind(new IPEndPoint(IPAddress.Loopback, 0));
+                listener.Listen(1);
+
+                Task<Socket> acceptTask = listener.AcceptAsync();
+                await Task.WhenAll(
+                    acceptTask, 
+                    client.ConnectAsync(new IPEndPoint(IPAddress.Loopback, ((IPEndPoint)listener.LocalEndPoint).Port)));
+
+                using (Socket server = await acceptTask)
+                {
+                    TaskCompletionSource<bool> tcs = null;
+
+                    var ea = new SocketAsyncEventArgs();
+                    ea.SetBuffer(Array.Empty<byte>(), 0, 0);
+                    ea.Completed += delegate { tcs.SetResult(true); };
+
+                    for (int i = 0; i < 3; i++)
+                    {
+                        tcs = new TaskCompletionSource<bool>();
+
+                        // Have the client do a 0-byte receive.  No data is available, so this should pend.
+                        Assert.True(client.ReceiveAsync(ea));
+                        Assert.Equal(0, client.Available);
+
+                        // Have the server send 1 byte to the client.
+                        Assert.Equal(1, server.Send(new byte[1], 0, 1, SocketFlags.None));
+
+                        // The client should now wake up, getting 0 bytes with 1 byte available.
+                        await tcs.Task;
+                        Assert.Equal(0, ea.BytesTransferred);
+                        Assert.Equal(SocketError.Success, ea.SocketError);
+                        Assert.Equal(1, client.Available); // Due to #13778, this sometimes fails on macOS
+
+                        // Receive that byte
+                        Assert.Equal(1, client.Receive(new byte[1]));
+                        Assert.Equal(0, client.Available);
+                    }
+                }
             }
         }
     }

@@ -484,9 +484,6 @@
       "value": "HEAD",
       "allowOverride": true
     },
-    "Build.Clean": {
-      "value": "all"
-    },
     "VsoAccountName": {
       "value": "dn-bot"
     },
@@ -509,7 +506,7 @@
       "value": "$(ProgramFiles)\\Git\\cmd\\git.exe"
     },
     "CleanAgent": {
-      "value": "false"
+      "value": "true"
     }
   },
   "demands": [

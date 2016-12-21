@@ -317,7 +317,7 @@
       },
       "inputs": {
         "filename": "docker",
-        "arguments": "run -w=\"$(GitDirectory)\" --name $(DockerContainerName) $(DockerContainerName) $(GitDirectory)/build-native.sh -buildArch=$(Platform) -$(ConfigurationGroup) -- generateversion",
+        "arguments": "run -w=\"$(GitDirectory)\" --name $(DockerContainerName) $(DockerContainerName) $(GitDirectory)/build-native.sh -buildArch=$(Platform) -$(ConfigurationGroup) $(portableLinux) -- generateversion",
         "workingFolder": "",
         "failOnStandardError": "false"
       }
@@ -371,7 +371,7 @@
       },
       "inputs": {
         "filename": "docker",
-        "arguments": "run -w=\"$(GitDirectory)\" --name $(DockerContainerName) $(DockerContainerName) $(GitDirectory)/build-packages.sh -$(ConfigurationGroup) -DisableManagedPackage",
+        "arguments": "run -w=\"$(GitDirectory)\" --name $(DockerContainerName) $(DockerContainerName) $(GitDirectory)/build-packages.sh -$(ConfigurationGroup) -DisableManagedPackage $(portableLinux)",
         "workingFolder": "",
         "failOnStandardError": "false"
       }
@@ -569,7 +569,7 @@
       },
       "inputs": {
         "filename": "$(Build.SourcesDirectory)/corefx/Tools/dotnetcli/dotnet",
-        "arguments": "$(Build.SourcesDirectory)/corefx/Tools/msbuild.sh $(Build.SourcesDirectory)/corefx/Tools/scripts/vstsagent/cleanupagent.proj /p:AgentDirectory=$(Agent.HomeDirectory) /p:DoClean=$(CleanAgent)",
+        "arguments": "$(Build.SourcesDirectory)/corefx/Tools/MSBuild.exe $(Build.SourcesDirectory)/corefx/Tools/scripts/vstsagent/cleanupagent.proj /p:AgentDirectory=$(Agent.HomeDirectory) /p:DoClean=$(CleanAgent)",
         "workingFolder": "",
         "failOnStandardError": "false"
       }
@@ -685,7 +685,11 @@
       "value": "https://$(VsoAccountName):$(VsoPassword)@devdiv.visualstudio.com/DevDiv/_git/$(VsoRepoName)/"
     },
     "CleanAgent": {
-      "value": "false"
+      "value": "true"
+    },
+    "portableLinux": {
+      "value": "",
+      "allowOverride": true
     }
   },
   "demands": [

@@ -112,6 +112,7 @@ namespace System.Xml.Tests
         private ITestOutputHelper _output;
         public XsltApiTestCaseBase2(ITestOutputHelper output)
         {
+            AppContext.SetSwitch("TestSwitch.LocalAppContext.DisableCaching", true);
             _output = output;
             this.Init(null);
         }
@@ -601,7 +602,7 @@ namespace System.Xml.Tests
         public void VerifyResult(string expectedValue)
         {
             XmlDiff.XmlDiff xmldiff = new XmlDiff.XmlDiff();
-            xmldiff.Option = XmlDiffOption.InfosetComparison | XmlDiffOption.IgnoreEmptyElement;
+            xmldiff.Option = XmlDiffOption.InfosetComparison | XmlDiffOption.IgnoreEmptyElement | XmlDiffOption.NormalizeNewline;
 
             StreamReader sr = new StreamReader(new FileStream("out.xml", FileMode.Open, FileAccess.Read));
             string actualValue = sr.ReadToEnd();
@@ -633,7 +634,7 @@ namespace System.Xml.Tests
             baseline = FullFilePath(baseline);
 
             XmlDiff.XmlDiff diff = new XmlDiff.XmlDiff();
-            diff.Option = XmlDiffOption.IgnoreEmptyElement | XmlDiffOption.IgnoreAttributeOrder | XmlDiffOption.InfosetComparison | XmlDiffOption.IgnoreWhitespace;
+            diff.Option = XmlDiffOption.IgnoreEmptyElement | XmlDiffOption.IgnoreAttributeOrder | XmlDiffOption.InfosetComparison | XmlDiffOption.IgnoreWhitespace | XmlDiffOption.NormalizeNewline;
             XmlParserContext context = new XmlParserContext(new NameTable(), null, "", XmlSpace.None);
 
             fsExpected = new FileStream(baseline, FileMode.Open, FileAccess.Read, FileShare.Read);

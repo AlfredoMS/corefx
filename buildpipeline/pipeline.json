@@ -134,6 +134,19 @@
             "Type": "build/product/",
             "ConfigurationGroup": "Release"
           }
+        },
+        {
+          "Name": "DotNet-CoreFx-Trusted-Linux-Native",
+          "Parameters": {
+            "DockerTag": "rhel7_prereqs_2",
+            "portableLinux": "-portableLinux"
+          },
+          "ReportingParameters": {
+            "OperatingSystem": "RedHat 7",
+            "SubType": "native",
+            "Type": "build/product/",
+            "ConfigurationGroup": "Release"
+          }
         },        
         {
           "Name": "DotNet-CoreFx-Trusted-Mac-Native",
@@ -331,6 +344,19 @@
           },
           "ReportingParameters": {
             "OperatingSystem": "Alpine 3.4.3",
+            "SubType": "native",
+            "Type": "build/product/",
+            "ConfigurationGroup": "Debug"
+          }
+        }, 
+        {
+          "Name": "DotNet-CoreFx-Trusted-Linux-Native",
+          "Parameters": {
+            "DockerTag": "rhel7_prereqs_2",
+            "portableLinux": "-portableLinux"
+          },
+          "ReportingParameters": {
+            "OperatingSystem": "RedHat7",
             "SubType": "native",
             "Type": "build/product/",
             "ConfigurationGroup": "Debug"
@@ -1089,6 +1115,58 @@
             "TestNugetRuntimeId": "osx.10.10-x64",
             "Type": "build/tests/",
             "ConfigurationGroup": "Debug"
+          }
+        }
+      ],
+      "DependsOn": [
+        "Trusted-All-Debug"
+      ]
+    },
+    {
+      "Name": "Publish Packages to Feeds - Release",
+      "Parameters": {
+        "TreatWarningsAsErrors": "false"
+      },
+      "BuildParameters": {
+        "ConfigurationGroup": "Release"
+      },
+      "Definitions": [
+        {
+          "Name": "DotNet-Trusted-Publish",
+          "Parameters": {
+            "VstsRepositoryName": "DotNet-CoreFX-Trusted",
+            "GitHubRepositoryName": "corefx"
+          },
+          "ReportingParameters": {
+            "TaskName": "Package Publish",
+            "Type": "build/publish/",
+            "ConfigurationGroup": "Release - Push to MyGet Feed"
+          }
+        }
+      ],
+      "DependsOn": [
+        "Trusted-All-Release"
+      ]
+    },
+    {
+      "Name": "Publish Packages to Drop - Debug",
+      "Parameters": {
+        "TreatWarningsAsErrors": "false"
+      },
+      "BuildParameters": {
+        "ConfigurationGroup": "Debug"
+      },
+      "Definitions": [
+        {
+          "Name": "DotNet-Trusted-Publish",
+          "Parameters": {
+            "VstsRepositoryName": "DotNet-CoreFX-Trusted",
+            "GitHubRepositoryName": "corefx"
+          },
+          "ReportingParameters": {
+            "TaskName": "Package Publish",
+            "Type": "build/publish/",
+            "ConfigurationGroup": "Debug - Push to Azure Storage"
           }
         }
       ],
